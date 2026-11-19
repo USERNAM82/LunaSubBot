@@ -1,0 +1,11 @@
+{
+  "name": "luna-bot-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "واجهة LUNA BOT على Vercel — تتصل بالبوت عبر قناة مشفّرة (/api/sub)",
+  "scripts": {
+    "gen-key": "node scripts/gen-key.js",
+    "selftest": "node scripts/selftest.js"
+  }
+}
