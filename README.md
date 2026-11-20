@@ -7,13 +7,12 @@
 ```
 
 ## الرفع
-1. ارفع مجلد `vercel` كمشروع (GitHub ثم Import، أو `vercel --prod` من داخل المجلد). لا حاجة لـ Build Command.
-2. على **البوت**: ضع مجلد `web` الجديد مكان `SidePlugins/web`، وشغّله مرة ليُنشأ المفتاح في `data/panel/api.key` (أو ضع متغير `LUNA_API_KEY` هناك).
-3. على **Vercel** → Settings → Environment Variables:
-   - `LUNA_BOT_URL` = `https://lunabot.hidenplay.net` (أو `http://...:24686` إن لم يوجد TLS)
-   - `LUNA_API_KEY`  = نفس محتوى `data/panel/api.key` بالضبط
-   (مفتاح جديد: `npm run gen-key`، ثم ضعه في الطرفين.)
-4. أعد النشر (Redeploy) بعد إضافة المتغيرات.
+المفتاح السري والرابط **مدمجان** في الكود في الطرفين (`vercel/lib/secure.js` و`web/panel/apikey.js`)، فلا حاجة لضبط أي متغير:
+1. ضع مجلد `web` الجديد مكان `SidePlugins/web` على البوت وأعد تشغيله.
+2. ارفع مجلد `vercel` كمشروع (GitHub ثم Import، أو `vercel --prod`). لا حاجة لـ Build Command.
+
+اختياريًا لتغيير المفتاح: `npm run gen-key` ثم ضعه كـ `LUNA_API_KEY` في Vercel وكمتغير بيئة على البوت (يتجاوز المدمج). `LUNA_BOT_URL` اختياري أيضًا.
+**لا ترفع هذا المشروع إلى مستودع GitHub عام** لأن المفتاح داخل الكود.
 
 ## الحماية
 - المفتاح **لا يُرسل أبدًا** في أي ترويسة؛ يُستعمل لاشتقاق مفاتيح AES-256-GCM (HKDF). حتى لو كان اتصال البوت HTTP عاديًا لا يستطيع أحد قراءة الطلب أو الرد.
@@ -31,3 +30,11 @@
 - إن تعذّر الوصول للبوت لأي سبب: `/api/status` يرد 200 بـ `online:false` (فتظهر الواجهة حالة "غير متصل")، و`/api/tunnel` يرد `{url:null}`، وبقية المسارات ترد 503 برسالة "النظام غير جاهز حالياً" بدل أي خطأ أو انهيار.
 - بعد فشل الاتصال يرد الوسيط فورًا 10 ثوانٍ (قاطع دائرة) كي لا تتعلّق الطلبات.
 - لا يوجد `engines` ولا `memory` في الإعدادات حتى لا يفشل النشر على أي خطة. وأي رابط غير `/api` يفتح الواجهة.
+
+## تشخيص "غير متصل"
+افتح `https://<موقعك>.vercel.app/api/status` وانظر حقل `reason`:
+- `config`   ← `LUNA_BOT_URL` أو `LUNA_API_KEY` غير مضبوطين في Vercel (أو لم تعمل Redeploy بعد إضافتهما).
+- `auth`     ← المفتاح مختلف بين Vercel والبوت (يجب أن يطابق `data/panel/api.key` حرفيًا). سطر `Web API: rejected request ... decrypt_failed` يظهر في كونسول البوت.
+- `network` / `timeout` ← الدومين لا يصل للبوت أو البوت متوقف أو المنفذ خاطئ في `LUNA_BOT_URL`.
+- `redirect` ← الدومين يحوّل الطلب (مثلاً http→https): اكتب `LUNA_BOT_URL` بـ https الصحيح بدون أي مسار.
+- `protocol` ← الرد ليس من البوت (دومين خاطئ أو بروكسي في الطريق).
